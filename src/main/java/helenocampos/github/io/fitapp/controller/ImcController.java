@@ -5,13 +5,22 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
+import org.json.JSONObject;
 
 @Controller
 public class ImcController {
 
+    private static final String GENDER_API_URL = "https://api.genderize.io?name=";
+
     @GetMapping("/imc")
     public String imcForm() {
         return "imcForm";
+    }
+
+    @GetMapping("/imcGender")
+    public String imcGenderForm() {
+        return "imcGenderForm";
     }
 
     @PostMapping("/imc")
@@ -28,7 +37,6 @@ public class ImcController {
         return "imcForm";
     }
 
-    // wip
     @PostMapping("/imcGender")
     public String calculateImcGender(@RequestParam("peso") double peso,
                                @RequestParam("altura") double altura,
@@ -36,12 +44,24 @@ public class ImcController {
                                Model model) {
 
         double imc = this.getIMC(peso, altura);
-        String resultado = this.getIMCClassification(imc);
+        String gender = this.getGenderByName(nome);
+        String resultado = this.getIMCClassificationByGender(imc, gender);
 
+        model.addAttribute("genero", getGeneroPt(gender));
         model.addAttribute("imc", imc);
         model.addAttribute("resultado", resultado);
 
-        return "imcForm";
+        return "imcGenderForm";
+    }
+
+    private String getGeneroPt(String gender){
+        if(gender.equals("male")){
+            return "Masculino";
+        }else if(gender.equals("female")){
+            return "Feminino";
+        }else{
+            return "Indefinido";
+        }
     }
 
     private double getIMC(double peso, double altura) {
@@ -62,5 +82,37 @@ public class ImcController {
         } else {
             return "Obesidade classe III";
         }
+    }
+
+    private String getIMCClassificationByGender(double imc, String gender){
+        double thresholdAbaixoPeso = 20;
+        double thresholdNormal = 24.9;
+        double thresholdObesidadeLeve = 29.9;
+        double thresholdObesidadeModerada = 39.9;
+        if (gender.equals("female")){
+            thresholdAbaixoPeso-=1;
+            thresholdNormal-=1;
+            thresholdObesidadeLeve-=1;
+            thresholdObesidadeModerada-=1;
+        }
+
+        if (imc < thresholdAbaixoPeso) {
+            return "Abaixo do peso";
+        } else if (imc <= thresholdNormal) {
+            return "Peso normal";
+        } else if (imc <= thresholdObesidadeLeve) {
+            return "Obesidade leve";
+        } else if (imc <= thresholdObesidadeModerada) {
+            return "Obesidade moderada";
+        } else{
+            return "Obesidade mórbida";
+        } 
+    }
+
+    private String getGenderByName(String name) {
+        RestTemplate restTemplate = new RestTemplate();
+        String result = restTemplate.getForObject(GENDER_API_URL + name, String.class);
+        JSONObject json = new JSONObject(result);
+        return json.optString("gender", "Indefinido");
     }
 }
