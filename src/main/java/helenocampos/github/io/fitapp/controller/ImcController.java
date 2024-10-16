@@ -1,17 +1,25 @@
 package helenocampos.github.io.fitapp.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.RestTemplate;
-import org.json.JSONObject;
+
+import helenocampos.github.io.fitapp.model.ImcGenderResult;
+import helenocampos.github.io.fitapp.model.ImcResult;
+import helenocampos.github.io.fitapp.service.GenderService;
 
 @Controller
 public class ImcController {
 
-    private static final String GENDER_API_URL = "https://api.genderize.io?name=";
+    GenderService genderService;
+
+    @Autowired
+    public ImcController(GenderService genderService) {
+        this.genderService = genderService;
+    }
 
     @GetMapping("/imc")
     public String imcForm() {
@@ -24,51 +32,62 @@ public class ImcController {
     }
 
     @PostMapping("/imc")
-    public String calculateImc(@RequestParam("peso") double peso,
-                               @RequestParam("altura") double altura,
-                               Model model) {
+    public String proccessImcRequest(@RequestParam("peso") double peso,
+            @RequestParam("altura") double altura,
+            Model model) {
 
-        double imc = this.getIMC(peso, altura);
-        String resultado = this.getIMCClassification(imc);
+        ImcResult resultado = proccessImc(peso, altura);
 
-        model.addAttribute("imc", imc);
-        model.addAttribute("resultado", resultado);
+        model.addAttribute("imc", resultado.getImc());
+        model.addAttribute("resultado", resultado.getClassification());
 
         return "imcForm";
     }
 
-    @PostMapping("/imcGender")
-    public String calculateImcGender(@RequestParam("peso") double peso,
-                               @RequestParam("altura") double altura,
-                               @RequestParam("nome") String nome,
-                               Model model) {
-
+    public ImcResult proccessImc(double peso, double altura) {
         double imc = this.getIMC(peso, altura);
-        String gender = this.getGenderByName(nome);
+        String resultado = this.getIMCClassification(imc);
+        return new ImcResult(resultado, imc);
+    }
+
+    public ImcGenderResult proccessImcGender(double peso, double altura, String nome) {
+        double imc = this.getIMC(peso, altura);
+        String gender = genderService.getGenderByName(nome);
         String resultado = this.getIMCClassificationByGender(imc, gender);
+        String genderURL = genderService.getExternalServiceUrl() + nome;
+        return new ImcGenderResult(resultado, imc, gender, genderURL);
+    }
 
-        model.addAttribute("genero", getGeneroPt(gender));
-        model.addAttribute("imc", imc);
-        model.addAttribute("resultado", resultado);
+    @PostMapping("/imcGender")
+    public String processImcGenderRequest(@RequestParam("peso") double peso,
+            @RequestParam("altura") double altura,
+            @RequestParam("nome") String nome,
+            Model model) {
 
+        ImcGenderResult resultado = proccessImcGender(peso, altura, nome);
+
+        model.addAttribute("genero", getGeneroPt(resultado.getGender()));
+        model.addAttribute("imc", resultado.getImc());
+        model.addAttribute("resultado", resultado.getClassification());
+        model.addAttribute("url", resultado.getRequestUrl());
         return "imcGenderForm";
     }
 
-    private String getGeneroPt(String gender){
-        if(gender.equals("male")){
+    public String getGeneroPt(String gender) {
+        if (gender.equals("male")) {
             return "Masculino";
-        }else if(gender.equals("female")){
+        } else if (gender.equals("female")) {
             return "Feminino";
-        }else{
+        } else {
             return "Indefinido";
         }
     }
 
-    private double getIMC(double peso, double altura) {
+    public double getIMC(double peso, double altura) {
         return peso / (altura * altura);
     }
 
-    private String getIMCClassification(double imc){
+    public String getIMCClassification(double imc) {
         if (imc < 18.8) {
             return "Abaixo do peso";
         } else if (imc < 25) {
@@ -84,16 +103,16 @@ public class ImcController {
         }
     }
 
-    private String getIMCClassificationByGender(double imc, String gender){
+    public String getIMCClassificationByGender(double imc, String gender) {
         double thresholdAbaixoPeso = 20;
         double thresholdNormal = 24.9;
         double thresholdObesidadeLeve = 29.9;
         double thresholdObesidadeModerada = 39.9;
-        if (gender.equals("female")){
-            thresholdAbaixoPeso-=1;
-            thresholdNormal-=1;
-            thresholdObesidadeLeve-=1;
-            thresholdObesidadeModerada-=1;
+        if (gender.equals("female")) {
+            thresholdAbaixoPeso -= 1;
+            thresholdNormal -= 1;
+            thresholdObesidadeLeve -= 1;
+            thresholdObesidadeModerada -= 1;
         }
 
         if (imc < thresholdAbaixoPeso) {
@@ -104,15 +123,8 @@ public class ImcController {
             return "Obesidade leve";
         } else if (imc <= thresholdObesidadeModerada) {
             return "Obesidade moderada";
-        } else{
+        } else {
             return "Obesidade mórbida";
-        } 
-    }
-
-    private String getGenderByName(String name) {
-        RestTemplate restTemplate = new RestTemplate();
-        String result = restTemplate.getForObject(GENDER_API_URL + name, String.class);
-        JSONObject json = new JSONObject(result);
-        return json.optString("gender", "Indefinido");
+        }
     }
 }

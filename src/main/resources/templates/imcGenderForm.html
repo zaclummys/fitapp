@@ -22,7 +22,7 @@
         <h2>Resultado:</h2>
         <p>IMC: <span th:text="${imc}"></span></p>
         <p>Classificação: <span th:text="${resultado}"></span></p>
-        <p>Gênero: <span th:text="${genero}"></span></p>
+        <p>Gênero: <a th:href="${url}" target="_blank"><span th:text="${genero}"></span></a></p>
         <a href="https://www.nutryun.com.br/tabela-imc" target="_blank">Fonte</a>
     </div>
 </body>
