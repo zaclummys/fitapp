@@ -148,7 +148,7 @@ public class ImcControllerTest {
     @Test
     public void testgetIMCClassificationByGenderObesidadeModeradaMale(){
         String result = imcController.getIMCClassificationByGender(39.9, "male");
-        String expected = "Obesidade moderadaaa";
+        String expected = "Obesidade moderada";
         assertEquals(expected, result);
     }
 
