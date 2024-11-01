@@ -4,4 +4,4 @@ WORKDIR /app
 
 COPY target/fitapp-0.0.1-SNAPSHOT.jar /app/fitapp.jar
 
-ENTRYPOINT ["java", "-jar", "/app/my-api.jar"]
+ENTRYPOINT ["java", "-jar", "/app/fitapp.jar"]
