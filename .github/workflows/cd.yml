@@ -3,7 +3,7 @@ on:
   workflow_run:
     workflows: ["Unit tests"] 
     branches: 
-      - ci
+      - master
     types: 
       - completed
 jobs:

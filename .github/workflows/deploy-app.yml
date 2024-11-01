@@ -2,9 +2,10 @@
   on:
     workflow_run:
         workflows: ["Publish coverage reports"]
-        branches: [ci]
+        branches:
+            - master
         types: 
-        - completed
+            - completed
 
   jobs:
     build-deploy:

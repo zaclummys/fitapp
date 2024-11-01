@@ -1,8 +1,6 @@
 name: Unit tests
 on:
-  push:
-    branches:
-      - ci
+  push
 jobs:
   test-full:
     name: Run CI Tests
