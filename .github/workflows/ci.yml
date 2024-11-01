@@ -16,4 +16,11 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
           architecture: x64
-      - run: mvn --batch-mode --update-snapshots verify
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - run: mvn --batch-mode test
