@@ -1,8 +1,9 @@
 name: Publish coverage reports
 on:
   workflow_run:
-    workflows: ["Unit tests"]
-    branches: [ci]
+    workflows: ["Unit tests"] 
+    branches: 
+      - ci
     types: 
       - completed
 jobs:
