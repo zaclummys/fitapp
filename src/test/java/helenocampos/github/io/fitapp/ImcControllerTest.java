@@ -7,16 +7,19 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import helenocampos.github.io.fitapp.controller.ImcController;
+import helenocampos.github.io.fitapp.service.FeatureFlagService;
 import helenocampos.github.io.fitapp.service.GenderService;
 
 public class ImcControllerTest {
     private ImcController imcController;
     private GenderService genderServiceMock;
+    private FeatureFlagService featureFlagMock;
 
     @BeforeEach
     public void setUp() {
         genderServiceMock = Mockito.mock(GenderService.class);
-        imcController = new ImcController(genderServiceMock);
+        featureFlagMock = Mockito.mock(FeatureFlagService.class);
+        imcController = new ImcController(genderServiceMock, featureFlagMock);
     }
 
     @Test

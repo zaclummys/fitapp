@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import helenocampos.github.io.fitapp.model.ImcGenderResult;
 import helenocampos.github.io.fitapp.model.ImcResult;
+import helenocampos.github.io.fitapp.service.FeatureFlagService;
 import helenocampos.github.io.fitapp.service.GenderService;
 
 @Controller
@@ -16,14 +17,21 @@ public class ImcController {
 
     GenderService genderService;
 
+    FeatureFlagService featureFlagService;
+
     @Autowired
-    public ImcController(GenderService genderService) {
+    public ImcController(GenderService genderService, FeatureFlagService featureFlagService) {
         this.genderService = genderService;
+        this.featureFlagService = featureFlagService;
     }
 
     @GetMapping("/imc")
     public String imcForm() {
-        return "imcForm";
+        if (featureFlagService.isEnabled("newImcForm")){
+            return "newImcForm";
+        }else{
+            return "imcForm";
+        }
     }
 
     @GetMapping("/imcGender")
@@ -40,8 +48,11 @@ public class ImcController {
 
         model.addAttribute("imc", resultado.getImc());
         model.addAttribute("resultado", resultado.getClassification());
-
-        return "imcForm";
+        if (featureFlagService.isEnabled("newImcForm")){
+            return "newImcForm";
+        }else{
+            return "imcForm";
+        }
     }
 
     public ImcResult proccessImc(double peso, double altura) {
